@@ -4,23 +4,28 @@ import jakarta.persistence.*;
 
 @Entity
 public class Enrollment {
+
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
-    @Column(name="enrollment_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "enrollment_id")
     private int enrollmentId;
 
-    @Column(name="final_grade")
-    private String finalGrade;
+    // Grade attribute for student's grade in the course
+    private String grade;
 
+    // ManyToOne relationship with User entity (student)
     @ManyToOne
-    @JoinColumn(name="section_id")
+    @JoinColumn(name = "student_email")
+    private User student;
+
+    // ManyToOne relationship with Section entity (course section)
+    @ManyToOne
+    @JoinColumn(name = "section_id")
     private Section section;
 
-    @ManyToOne
-    @JoinColumn(name="user_id")
-    private User user;
+    public Enrollment() {
+    }
 
-    // Getters and Setters
     public int getEnrollmentId() {
         return enrollmentId;
     }
@@ -29,12 +34,20 @@ public class Enrollment {
         this.enrollmentId = enrollmentId;
     }
 
-    public String getFinalGrade() {
-        return finalGrade;
+    public String getGrade() {
+        return grade;
     }
 
-    public void setFinalGrade(String finalGrade) {
-        this.finalGrade = finalGrade;
+    public void setGrade(String grade) {
+        this.grade = grade;
+    }
+
+    public User getStudent() {
+        return student;
+    }
+
+    public void setStudent(User student) {
+        this.student = student;
     }
 
     public Section getSection() {
@@ -43,13 +56,5 @@ public class Enrollment {
 
     public void setSection(Section section) {
         this.section = section;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 }
