@@ -50,14 +50,14 @@ public class SectionController {
         s.setTimes(section.times());
 
         User instructor = null;
-        if (section.instructorEmail()==null || section.instructorEmail().equals("")) {
-            s.setInstructor_email("");
+        if (section.instructorEmail()==null || section.instructorEmail().isEmpty()) {
+            s.setInstructorEmail("");
         } else {
             instructor = userRepository.findByEmail(section.instructorEmail());
             if (instructor == null || !instructor.getType().equals("INSTRUCTOR")) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "email not found or not an instructor " + section.instructorEmail());
             }
-            s.setInstructor_email(section.instructorEmail());
+            s.setInstructorEmail(section.instructorEmail());
         }
 
         sectionRepository.save(s);
@@ -90,14 +90,14 @@ public class SectionController {
         s.setTimes(section.times());
 
         User instructor = null;
-        if (section.instructorEmail()==null || section.instructorEmail().equals("")) {
-            s.setInstructor_email("");
+        if (section.instructorEmail()==null || section.instructorEmail().isEmpty()) {
+            s.setInstructorEmail("");
         } else {
             instructor = userRepository.findByEmail(section.instructorEmail());
             if (instructor == null || !instructor.getType().equals("INSTRUCTOR")) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "email not found or not an instructor " + section.instructorEmail());
             }
-            s.setInstructor_email(section.instructorEmail());
+            s.setInstructorEmail(section.instructorEmail());
         }
         sectionRepository.save(s);
     }
