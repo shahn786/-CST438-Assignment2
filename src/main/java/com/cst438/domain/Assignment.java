@@ -3,8 +3,6 @@ package com.cst438.domain;
 import jakarta.persistence.*;
 
 import java.sql.Date;
-import java.text.SimpleDateFormat;
-import java.util.List;
 
 @Entity
 public class Assignment {
@@ -19,9 +17,43 @@ public class Assignment {
     @Column(name="due_date")
     private Date dueDate;
 
+    @Column(name="course_id")
+    private String courseId;
+
+    @Column(name="section_id")
+    private int secId;
+
+    @Column(name="section_num")
+    private int secNo;
+
+    public String getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(String courseId) {
+        this.courseId = courseId;
+    }
+
+    public int getSecId() {
+        return secId;
+    }
+
+    public void setSecId(int secId) {
+        this.secId = secId;
+    }
+
+    public int getSectionNo() {
+        return secNo;
+    }
+
+    public void setSecNo(int secNo) {
+        this.secNo = secNo;
+    }
+
     @ManyToOne
     @JoinColumn(name="section_id")
     private Section section;
+
 
     // Constructors, getters, and setters
     public Assignment() {
