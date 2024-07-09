@@ -15,13 +15,14 @@ public class Enrollment {
 
     // ManyToOne relationship with User entity (student)
     @ManyToOne
-    @JoinColumn(name = "student_email")
+    @JoinColumn(name = "user_id")
     private User student;
 
     // ManyToOne relationship with Section entity (course section)
     @ManyToOne
-    @JoinColumn(name = "section_id")
+    @JoinColumn(name = "section_no")
     private Section section;
+
 
     public Enrollment() {
     }

@@ -79,7 +79,7 @@ List<EnrollmentDTO> transcript = new ArrayList<>();
            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "student not found or not a student");
        }
 
-       List<Enrollment> enrollments = enrollmentRepository.findByYearAndSemesterOrderByCourseId(term.getTermId(), semester, studentId);
+       List<Enrollment> enrollments = enrollmentRepository.findByYearAndSemesterOrderByCourseId(year, semester, studentId);
 
        List<EnrollmentDTO> schedule = new ArrayList<>();
        for (Enrollment e : enrollments) {

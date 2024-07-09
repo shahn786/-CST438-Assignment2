@@ -10,7 +10,11 @@ public class Assignment {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="assignment_id")
     private int assignmentId;
- 
+
+    @ManyToOne
+    @JoinColumn(name = "section_no")
+    private Section section;
+
     @Column(name="title")
     private String title;
 
@@ -19,40 +23,6 @@ public class Assignment {
 
     @Column(name="course_id")
     private String courseId;
-
-    @Column(name="section_id")
-    private int secId;
-
-    @Column(name="section_num")
-    private int secNo;
-
-    public String getCourseId() {
-        return courseId;
-    }
-
-    public void setCourseId(String courseId) {
-        this.courseId = courseId;
-    }
-
-    public int getSecId() {
-        return secId;
-    }
-
-    public void setSecId(int secId) {
-        this.secId = secId;
-    }
-
-    public int getSectionNo() {
-        return secNo;
-    }
-
-    public void setSecNo(int secNo) {
-        this.secNo = secNo;
-    }
-
-    @ManyToOne
-    @JoinColumn(name="section_id")
-    private Section section;
 
 
     // Constructors, getters, and setters
@@ -95,5 +65,13 @@ public class Assignment {
 
     public void setSection(Section section) {
         this.section = section;
+    }
+
+    public String getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(String courseId) {
+        this.courseId = courseId;
     }
 }

@@ -44,18 +44,23 @@ public class AssignmentController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found");
         }
 
-        // Assuming user information is retrieved from some service or context
-        String userEmail = section.getInstructorEmail();
-        User user = userRepository.findByEmail(userEmail);
+        User instructor = userRepository.findByEmail(section.getInstructorEmail());
+        String instructorName = instructor.getName();
 
-        if (!user.getType().equals("INSTRUCTOR") || !section.getInstructorEmail().equals(user.getEmail())) {
+        if (!instructor.getType().equals("INSTRUCTOR") || !section.getInstructorEmail().equals(instructor.getEmail())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only INSTRUCTOR can view assignments for this section");
         }
 
         List<Assignment> assignments = assignmentRepository.findBySectionNoOrderByDueDate(secNo);
         List<AssignmentDTO> assignmentDTOs = new ArrayList<>();
         for (Assignment a : assignments) {
-            assignmentDTOs.add(new AssignmentDTO(a.getAssignmentId(), a.getTitle(), a.getDueDate(), a.getCourseId(), a.getSecId(), a.getSectionNo()));
+            assignmentDTOs.add(new AssignmentDTO(
+                    a.getAssignmentId(),
+                    a.getTitle(),
+                    a.getDueDate(),
+                    a.getCourseId(),
+                    a.getSection().getSecId(),
+                    a.getSection().getSectionNo()));
         }
         return assignmentDTOs;
     }
@@ -73,10 +78,10 @@ public class AssignmentController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found");
         }
 
-        String userEmail = section.getInstructorEmail();
-        User user = userRepository.findByEmail(userEmail);
+        User instructor = userRepository.findByEmail(section.getInstructorEmail());
 
-        if (!section.getInstructorName().equals(user.getName())) {
+        // Check if the retrieved instructor matches the one associated with the section
+        if (!instructor.getEmail().equals(section.getInstructorEmail())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only Instructor can add assignments for this section");
         }
 
@@ -90,7 +95,13 @@ public class AssignmentController {
         a.setSection(section);
         assignmentRepository.save(a);
 
-        return new AssignmentDTO(a.getAssignmentId(), a.getTitle(), a.getDueDate(), a.getCourseId(), a.getSecId(), a.getSectionNo());
+        return new AssignmentDTO(
+                a.getAssignmentId(),
+                a.getTitle(),
+                a.getDueDate(),
+                a.getCourseId(),
+                a.getSection().getSecId(),
+                a.getSection().getSectionNo());
     }
 
 
@@ -105,14 +116,15 @@ public class AssignmentController {
         if (a == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found");
         }
-            Section section = a.getSection();
 
-            String userEmail = section.getInstructorEmail();
-            User user = userRepository.findByEmail(userEmail);
+        Section section = a.getSection();
 
-            if (!section.getInstructorName().equals(user.getName())) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only INSTRUCTOR can update assignments for this section");
-            }
+        User instructor = userRepository.findByEmail(section.getInstructorEmail());
+
+        // Check if the user is authorized to update the assignment
+        if (!instructor.getEmail().equals(section.getInstructorEmail())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only INSTRUCTOR can update assignments for this section");
+        }
 
             if (dto.dueDate().before(section.getTerm().getStartDate()) || dto.dueDate().after(section.getTerm().getEndDate())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assignment due date is outside of the course term");
@@ -122,7 +134,13 @@ public class AssignmentController {
             a.setDueDate(dto.dueDate());
             assignmentRepository.save(a);
 
-        return new AssignmentDTO(a.getAssignmentId(), a.getTitle(), a.getDueDate(), a.getCourseId(), a.getSecId(), a.getSectionNo());
+        return new AssignmentDTO(
+                a.getAssignmentId(),
+                a.getTitle(),
+                a.getDueDate(),
+                a.getCourseId(),
+                a.getSection().getSecId(),
+                a.getSection().getSectionNo());
     }
 
 
@@ -138,10 +156,10 @@ public class AssignmentController {
 
         Section section = a.getSection();
 
-        String userEmail = section.getInstructorEmail();
-        User user = userRepository.findByEmail(userEmail);
+        User instructor = userRepository.findByEmail(section.getInstructorEmail());
 
-        if (!section.getInstructorName().equals(user.getName())) {
+        // Check if the user is authorized to delete the assignment
+        if (!instructor.getEmail().equals(section.getInstructorEmail())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only INSTRUCTOR can delete assignments for this section");
         }
 
@@ -159,11 +177,11 @@ public class AssignmentController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found");
         }
         Section section = a.getSection();
-        
-        String userEmail = section.getInstructorEmail();
-        User user = userRepository.findByEmail(userEmail);
 
-        if (!section.getInstructorName().equals(user.getName())) {
+        User instructor = userRepository.findByEmail(section.getInstructorEmail());
+
+        // Check if the user is authorized to view grades for the assignment
+        if (!instructor.getEmail().equals(section.getInstructorEmail())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only INSTRUCTOR can view grades for this assignment");
         }
 
@@ -176,7 +194,7 @@ public class AssignmentController {
                 grade = new Grade();
                 grade.setEnrollment(enrollment);
                 grade.setAssignment(a);
-                grade.setScore(null); // Assuming score is nullable
+                grade.setScore(null);
                 gradeRepository.save(grade); // Save the new grade
             }
 
@@ -201,19 +219,14 @@ public class AssignmentController {
 
         for (GradeDTO dto : dlist) {
             Grade grade = gradeRepository.findById(dto.gradeId()).orElse(null);
-            if (grade == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Grade not found");
+            Section section = sectionRepository.findById(dto.sectionId()).orElse(null);
+
+            if (grade != null) {
+                grade.setScore(dto.score());
+                gradeRepository.save(grade);
+            } else {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "grade not found " + dto.gradeId());
             }
-
-            String userEmail = grade.getEnrollment().getSection().getInstructorEmail();
-            User user = userRepository.findByEmail(userEmail);
-
-            if (!grade.getEnrollment().getSection().getInstructorName().equals(user.getName())) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only INSTRUCTOR can update grades for this section");
-            }
-
-            grade.setScore(dto.score());
-            gradeRepository.save(grade);
         }
     }
 
@@ -247,9 +260,9 @@ public class AssignmentController {
             assignmentStudentDTOs.add(new AssignmentStudentDTO(
                     assignment.getAssignmentId(),
                     assignment.getTitle(),
-                    assignment.getDueDate(), // Assuming dueDate is a Date object
+                    assignment.getDueDate(),
                     assignment.getCourseId(),
-                    assignment.getSecId(),
+                    assignment.getSection().getSecId(),
                     grade.getScore()
             ));
         }

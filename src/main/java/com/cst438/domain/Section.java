@@ -22,12 +22,15 @@ public class Section {
 
     @Column(name="sec_id")
     private int secId;   // sequential numbering of sections of a course in a term:  1, 2, 3, ....
+
     private String building;
+
     private String room;
+
     private String times;
+
     @Column(name="instructor_email")
     private String instructorEmail;
-    private String InstructorName;
 
     @OneToMany(mappedBy="section")
     List<Enrollment> enrollments;
@@ -35,14 +38,6 @@ public class Section {
     @OneToMany(mappedBy="section")
     List<Assignment> assignments;
 
-
-    public String getInstructorName() {
-        return InstructorName;
-    }
-
-    public void setInstructorName(String instructorName) {
-        InstructorName = instructorName;
-    }
 
     public int getSectionNo() {
         return sectionNo;

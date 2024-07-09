@@ -37,7 +37,8 @@ public class EnrollmentController {
         String semester = section.getTerm().getSemester();
 
         // Check if the user is the instructor of the section
-        if (sectionRepository.findByInstructorEmailAndYearAndSemester(instructorEmail, year, semester) != null) {
+        List<Section> instructorSections = sectionRepository.findByInstructorEmailAndYearAndSemester(instructorEmail, year, semester);
+        if (instructorSections.isEmpty() || !instructorSections.contains(section)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only the section instructor can view enrollments.");
         }
 

@@ -33,14 +33,14 @@ public class SectionController {
 
         Course course = courseRepository.findById(section.courseId()).orElse(null);
         if (course == null ){
-            throw  new ResponseStatusException( HttpStatus.NOT_FOUND, "course not found "+section.courseId());
+            throw  new ResponseStatusException( HttpStatus.BAD_REQUEST, "course not found "+section.courseId());
         }
         Section s = new Section();
         s.setCourse(course);
 
         Term term = termRepository.findByYearAndSemester(section.year(), section.semester());
         if (term == null) {
-            throw  new ResponseStatusException( HttpStatus.NOT_FOUND, "year, semester invalid ");
+            throw  new ResponseStatusException( HttpStatus.BAD_REQUEST, "year, semester invalid ");
         }
         s.setTerm(term);
 
@@ -66,13 +66,13 @@ public class SectionController {
                 s.getTerm().getYear(),
                 s.getTerm().getSemester(),
                 s.getCourse().getCourseId(),
-		s.getCourse().getTitle(),
+		        s.getCourse().getTitle(),
                 s.getSecId(),
                 s.getBuilding(),
                 s.getRoom(),
                 s.getTimes(),
-                (instructor!=null) ? instructor.getName() : "",
-                (instructor!=null) ? instructor.getEmail() : ""
+                instructor.getName(),
+                s.getInstructorEmail()
         );
     }
 
@@ -136,7 +136,7 @@ public class SectionController {
                     s.getTerm().getYear(),
                     s.getTerm().getSemester(),
                     s.getCourse().getCourseId(),
-		    s.getCourse().getTitle(),
+		            s.getCourse().getTitle(),
                     s.getSecId(),
                     s.getBuilding(),
                     s.getRoom(),
@@ -171,7 +171,7 @@ public class SectionController {
                     s.getTerm().getYear(),
                     s.getTerm().getSemester(),
                     s.getCourse().getCourseId(),
-		    s.getCourse().getTitle(),
+		            s.getCourse().getTitle(),
                     s.getSecId(),
                     s.getBuilding(),
                     s.getRoom(),
@@ -196,7 +196,7 @@ public class SectionController {
                     s.getTerm().getYear(),
                     s.getTerm().getSemester(),
                     s.getCourse().getCourseId(),
-		    s.getCourse().getTitle(),
+		            s.getCourse().getTitle(),
                     s.getSecId(),
                     s.getBuilding(),
                     s.getRoom(),
