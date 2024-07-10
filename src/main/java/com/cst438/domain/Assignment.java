@@ -3,6 +3,7 @@ package com.cst438.domain;
 import jakarta.persistence.*;
 
 import java.sql.Date;
+import java.text.SimpleDateFormat;
 
 @Entity
 public class Assignment {
@@ -10,30 +11,12 @@ public class Assignment {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="assignment_id")
     private int assignmentId;
-
-    @ManyToOne
-    @JoinColumn(name = "section_no")
-    private Section section;
-
-    @Column(name="title")
     private String title;
-
     @Column(name="due_date")
     private Date dueDate;
-
-    @Column(name="course_id")
-    private String courseId;
-
-
-    // Constructors, getters, and setters
-    public Assignment() {
-    }
-
-    public Assignment(String title, Date dueDate, Section section) {
-        this.title = title;
-        this.dueDate = dueDate;
-        this.section = section;
-    }
+    @ManyToOne
+    @JoinColumn(name="section_no", nullable=false)
+    private Section section;
 
     public int getAssignmentId() {
         return assignmentId;
@@ -55,8 +38,24 @@ public class Assignment {
         return dueDate;
     }
 
+    public String getDueDateAsString() {
+        if (this.dueDate!=null) {
+            SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd");
+            return f.format(this.dueDate);
+        } else {
+            return null;
+        }
+    }
+
     public void setDueDate(Date dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public void setDueDate(String dueDate) {
+        if (dueDate!=null)
+            this.dueDate = Date.valueOf(dueDate);
+        else
+            this.dueDate=null;
     }
 
     public Section getSection() {
@@ -65,13 +64,5 @@ public class Assignment {
 
     public void setSection(Section section) {
         this.section = section;
-    }
-
-    public String getCourseId() {
-        return courseId;
-    }
-
-    public void setCourseId(String courseId) {
-        this.courseId = courseId;
     }
 }

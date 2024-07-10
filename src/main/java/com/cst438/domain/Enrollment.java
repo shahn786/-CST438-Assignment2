@@ -4,28 +4,19 @@ import jakarta.persistence.*;
 
 @Entity
 public class Enrollment {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "enrollment_id")
-    private int enrollmentId;
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name="enrollment_id")
+    int enrollmentId;
+    String grade;
 
-    // Grade attribute for student's grade in the course
-    private String grade;
-
-    // ManyToOne relationship with User entity (student)
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User student;
+    @JoinColumn(name="section_no", nullable=false)
+    Section section;
 
-    // ManyToOne relationship with Section entity (course section)
     @ManyToOne
-    @JoinColumn(name = "section_no")
-    private Section section;
-
-
-    public Enrollment() {
-    }
+    @JoinColumn(name="user_id", nullable=false)
+    User student;
 
     public int getEnrollmentId() {
         return enrollmentId;
@@ -35,12 +26,12 @@ public class Enrollment {
         this.enrollmentId = enrollmentId;
     }
 
-    public String getGrade() {
-        return grade;
+    public Section getSection() {
+        return section;
     }
 
-    public void setGrade(String grade) {
-        this.grade = grade;
+    public void setSection(Section section) {
+        this.section = section;
     }
 
     public User getStudent() {
@@ -51,11 +42,11 @@ public class Enrollment {
         this.student = student;
     }
 
-    public Section getSection() {
-        return section;
+    public String getGrade() {
+        return grade;
     }
 
-    public void setSection(Section section) {
-        this.section = section;
+    public void setGrade(String grade) {
+        this.grade = grade;
     }
 }

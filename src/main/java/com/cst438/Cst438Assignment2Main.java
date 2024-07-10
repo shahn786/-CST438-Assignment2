@@ -16,28 +16,3 @@ public class Cst438Assignment2Main {
 	}
 
 }
-
-
-//List<Enrollment> enrollments = enrollmentRepository.findEnrollmentsByStudentIdOrderByTermId(studentId);
-//
-//List<EnrollmentDTO> transcript = new ArrayList<>();
-//       for (Enrollment e : enrollments) {
-//		transcript.add(new EnrollmentDTO(
-//		e.getEnrollmentId(),
-//                   e.getGrade(),
-//                   e.getStudent().getId(),
-//                   e.getStudent().getName(),
-//                   e.getStudent().getEmail(),
-//                   e.getSection().getCourse().getCourseId(),
-//                   e.getSection().getCourse().getTitle(),
-//                   e.getSection().getSecId(),
-//                   e.getSection().getSectionNo(),
-//                   e.getSection().getBuilding(),
-//                   e.getSection().getRoom(),
-//                   e.getSection().getTimes(),
-//                   e.getSection().getCourse().getCredits(),
-//                   e.getSection().getTerm().getYear(),
-//                   e.getSection().getTerm().getSemester()
-//           ));
-//				   }
-//				   return transcript;

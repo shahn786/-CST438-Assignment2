@@ -2,6 +2,7 @@ package com.cst438.domain;
 
 import jakarta.persistence.*;
 
+import java.sql.Date;
 import java.util.List;
 
 @Entity
@@ -15,20 +16,14 @@ public class Section {
     @ManyToOne
     @JoinColumn(name="course_id", nullable=false)
     private Course course;
-
     @ManyToOne
     @JoinColumn(name="term_id", nullable=false)
     private Term term;
-
     @Column(name="sec_id")
     private int secId;   // sequential numbering of sections of a course in a term:  1, 2, 3, ....
-
     private String building;
-
     private String room;
-
     private String times;
-
     @Column(name="instructor_email")
     private String instructorEmail;
 
@@ -37,7 +32,6 @@ public class Section {
 
     @OneToMany(mappedBy="section")
     List<Assignment> assignments;
-
 
     public int getSectionNo() {
         return sectionNo;
@@ -99,7 +93,7 @@ public class Section {
         return instructorEmail;
     }
 
-    public void setInstructorEmail(String instructorEmail) {
+    public void setInstructor_email(String instructorEmail) {
         this.instructorEmail = instructorEmail;
     }
 

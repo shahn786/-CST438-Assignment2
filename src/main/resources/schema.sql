@@ -21,8 +21,8 @@ ALTER SEQUENCE sec_seq RESTART WITH 1000;
 create table section (
     section_no int default next value for sec_seq  primary key,
     course_id varchar(10) not null,
-    sec_id int not null not null,
-    term_id int not null not null,
+    sec_id int not null,
+    term_id int not null,
     building varchar(10),
     room varchar(10),
     times varchar(25),

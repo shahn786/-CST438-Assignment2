@@ -9,7 +9,7 @@ import java.sql.Date;
 public record AssignmentDTO(
         int id,
         String title,
-        Date dueDate,
+        String dueDate,
         String courseId,
         int secId,
         int secNo

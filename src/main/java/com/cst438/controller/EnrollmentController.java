@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,38 +19,23 @@ public class EnrollmentController {
     EnrollmentRepository enrollmentRepository;
 
     @Autowired
+    UserRepository userRepository;
+
+    @Autowired
     SectionRepository sectionRepository;
 
-    // instructor downloads student enrollments for a section, ordered by student name
+
+    // instructor downloads student enrollments and grades for a section, ordered by student name
     // user must be instructor for the section
     @GetMapping("/sections/{sectionNo}/enrollments")
-    public List<EnrollmentDTO> getEnrollments(@PathVariable("sectionNo") int sectionNo) {
+    public List<EnrollmentDTO> getEnrollments(
+            @PathVariable("sectionNo") int sectionNo ) {
 
-        Section section = sectionRepository.findById(sectionNo)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found"));
-
-        if (section == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found.");
-        }
-
-        String instructorEmail = section.getInstructorEmail();
-        int year = section.getTerm().getYear();
-        String semester = section.getTerm().getSemester();
-
-        // Check if the user is the instructor of the section
-        List<Section> instructorSections = sectionRepository.findByInstructorEmailAndYearAndSemester(instructorEmail, year, semester);
-        if (instructorSections.isEmpty() || !instructorSections.contains(section)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only the section instructor can view enrollments.");
-        }
-
-        List<Enrollment> enrollments = enrollmentRepository.findEnrollmentsBySectionNoOrderByStudentName(sectionNo);
-        if (enrollments.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No enrollments found for this section.");
-        }
-
-        List<EnrollmentDTO> enrollmentDTOs = new ArrayList<>();
+        List<Enrollment> enrollments = enrollmentRepository
+                .findEnrollmentsBySectionNoOrderByStudentName(sectionNo);
+        List<EnrollmentDTO> dlist = new ArrayList<>();
         for (Enrollment e : enrollments) {
-            EnrollmentDTO dto = new EnrollmentDTO(
+            dlist.add(new EnrollmentDTO(
                     e.getEnrollmentId(),
                     e.getGrade(),
                     e.getStudent().getId(),
@@ -64,41 +50,23 @@ public class EnrollmentController {
                     e.getSection().getTimes(),
                     e.getSection().getCourse().getCredits(),
                     e.getSection().getTerm().getYear(),
-                    e.getSection().getTerm().getSemester()
-            );
-            enrollmentDTOs.add(dto);
+                    e.getSection().getTerm().getSemester()));
         }
-            return enrollmentDTOs;
+        return dlist;
     }
 
-    // instructor uploads enrollments with the final grades for the section
+    // instructor uploads  final grades for the section
     // user must be instructor for the section
     @PutMapping("/enrollments")
     public void updateEnrollmentGrade(@RequestBody List<EnrollmentDTO> dlist) {
-
-        if (dlist.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Enrollment list is empty.");
-        }
-
-        // Check if the user is the instructor for the enrollment's section
-        Enrollment firstEnrollment = enrollmentRepository.findById(dlist.get(0).enrollmentId()).orElse(null);
-        if (firstEnrollment == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "First enrollment not found.");
-        }
-
-        Section section = firstEnrollment.getSection();
-
-        if (sectionRepository.findByInstructorEmailAndYearAndSemester(section.getInstructorEmail(), section.getTerm().getYear(), section.getTerm().getSemester()) != null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Only the section instructor can update enrollment grades.");
-        }
-
-        for (EnrollmentDTO dto : dlist) {
-            Enrollment enrollment = enrollmentRepository.findById(dto.enrollmentId()).orElse(null);
-            if (enrollment == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Enrollment not found for ID: " + dto.enrollmentId());
+        for (EnrollmentDTO d : dlist) {
+            Enrollment e = enrollmentRepository.findById(d.enrollmentId()).orElse(null);
+            if (e==null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "enrollment not found "+d.enrollmentId());
+            } else {
+                e.setGrade(d.grade());
+                enrollmentRepository.save(e);
             }
-            enrollment.setGrade(dto.grade());
-            enrollmentRepository.save(enrollment);
         }
     }
 }
