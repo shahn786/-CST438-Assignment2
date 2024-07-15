@@ -1,267 +1,250 @@
 package com.cst438.controller;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import com.cst438.domain.Section;
+import com.cst438.domain.SectionRepository;
+import com.cst438.dto.SectionDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-
-import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SectionControllerSystemTest {
+/*
+ * example of unit test to add a section to an existing course
+ */
 
-    // TODO edit the following to give the location and file name
-    // of the Chrome driver.
-    //  for WinOS the file name will be chromedriver.exe
-    //  for MacOS the file name will be chromedriver
-    public static final String CHROME_DRIVER_FILE_LOCATION =
-            "C:/chromedriver_win32/chromedriver.exe";
+@AutoConfigureMockMvc
+@SpringBootTest
+public class SectionControllerUnitTest {
 
-    //public static final String CHROME_DRIVER_FILE_LOCATION =
-    //        "~/chromedriver_macOS/chromedriver";
-    public static final String URL = "http://localhost:3000";
+    @Autowired
+    MockMvc mvc;
 
-    public static final int SLEEP_DURATION = 1000; // 1 second.
+    @Autowired
+    SectionRepository sectionRepository;
 
+    @Test
+    public void addSection() throws Exception {
 
-    // add selenium dependency to pom.xml
+        MockHttpServletResponse response;
 
-    // these tests assumes that test data does NOT contain any
-    // sections for course cst499 in 2024 Spring term.
+        // create DTO with data for new section.
+        // the primary key, secNo, is set to 0. it will be
+        // set by the database when the section is inserted.
+        SectionDTO section = new SectionDTO(
+                0,
+                2024,
+                "Spring",
+                "cst499",
+                "",
+                1,
+                "052",
+                "104",
+                "W F 1:00-2:50 pm",
+                "Joshua Gross",
+                "jgross@csumb.edu"
+        );
 
-    WebDriver driver;
+        // issue a http POST request to SpringTestServer
+        // specify MediaType for request and response data
+        // convert section to String data and set as request content
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/sections")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(asJsonString(section)))
+                .andReturn()
+                .getResponse();
 
-    @BeforeEach
-    public void setUpDriver() throws Exception {
+        // check the response code for 200 meaning OK
+        assertEquals(200, response.getStatus());
 
-        // set properties required by Chrome Driver
-        System.setProperty(
-                "webdriver.chrome.driver", CHROME_DRIVER_FILE_LOCATION);
-        ChromeOptions ops = new ChromeOptions();
-        ops.addArguments("--remote-allow-origins=*");
+        // return data converted from String to DTO
+        SectionDTO result = fromJsonString(response.getContentAsString(), SectionDTO.class);
 
-        // start the driver
-        driver = new ChromeDriver(ops);
+        // primary key should have a non zero value from the database
+        assertNotEquals(0, result.secNo());
+        // check other fields of the DTO for expected values
+        assertEquals("cst499", result.courseId());
 
-        driver.get(URL);
-        // must have a short wait to allow time for the page to download
-        Thread.sleep(SLEEP_DURATION);
+        // check the database
+        Section s = sectionRepository.findById(result.secNo()).orElse(null);
+        assertNotNull(s);
+        assertEquals("cst499", s.getCourse().getCourseId());
 
-    }
+        // clean up after test. issue http DELETE request for section
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .delete("/sections/"+result.secNo()))
+                .andReturn()
+                .getResponse();
 
-    @AfterEach
-    public void terminateDriver() {
-        if (driver != null) {
-            // quit driver
-            driver.close();
-            driver.quit();
-            driver = null;
-        }
+        assertEquals(200, response.getStatus());
+
+        // check database for delete
+        s = sectionRepository.findById(result.secNo()).orElse(null);
+        assertNull(s);  // section should not be found after delete
     }
 
     @Test
-    public void systemTestAddSection() throws Exception {
-        // add a section for cst499 Spring 2024 term
-        // verify section shows on the list of sections for Spring 2024
-        // delete the section
-        // verify the section is gone
+    public void addSectionFailsBadCourse() throws Exception {
 
+        MockHttpServletResponse response;
 
-        // click link to navigate to Sections
-        WebElement we = driver.findElement(By.id("sections"));
-        we.click();
-        Thread.sleep(SLEEP_DURATION);
+        // course id cst599 does not exist.
+        SectionDTO section = new SectionDTO(
+                0,
+                2024,
+                "Spring",
+                "cst599",
+                "",
+                1,
+                "052",
+                "104",
+                "W F 1:00-2:50 pm",
+                "Joshua Gross",
+                "jgross@csumb.edu"
+        );
 
-        // enter cst499, 2024, Spring and click search sections
-        driver.findElement(By.id("scourseId")).sendKeys("cst499");
-        driver.findElement(By.id("syear")).sendKeys("2024");
-        driver.findElement(By.id("ssemester")).sendKeys("Spring");
-        driver.findElement(By.id("search")).click();
-        Thread.sleep(SLEEP_DURATION);
+        // issue the POST request
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/sections")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(asJsonString(section)))
+                .andReturn()
+                .getResponse();
 
-        // verify that cst499 is not in the list of sections
-        // if it exists, then delete it
-        // Selenium throws NoSuchElementException when the element is not found
-        try {
-            while (true) {
-                WebElement row499 = driver.findElement(By.xpath("//tr[td='cst499']"));
-                List<WebElement> buttons = row499.findElements(By.tagName("button"));
-                // delete is the second button
-                assertEquals(2, buttons.size());
-                buttons.get(1).click();
-                Thread.sleep(SLEEP_DURATION);
-                // find the YES to confirm button
-                List<WebElement> confirmButtons = driver
-                        .findElement(By.className("react-confirm-alert-button-group"))
-                        .findElements(By.tagName("button"));
-                assertEquals(2, confirmButtons.size());
-                confirmButtons.get(0).click();
-                Thread.sleep(SLEEP_DURATION);
-            }
-        } catch (NoSuchElementException e) {
-           // do nothing, continue with test
-        }
+        // response should be 400, BAD_REQUEST
+        assertEquals(400, response.getStatus());
 
-        // find and click button to add a section
-        driver.findElement(By.id("addSection")).click();
-        Thread.sleep(SLEEP_DURATION);
-
-        // enter data
-        //  courseId: cst499,
-        driver.findElement(By.id("ecourseId")).sendKeys("cst499");
-        //  secId: 1,
-        driver.findElement(By.id("esecId")).sendKeys("1");
-        //  year:2024,
-        driver.findElement(By.id("eyear")).sendKeys("2024");
-        //  semester:Spring,
-        driver.findElement(By.id("esemester")).sendKeys("Spring");
-        //  building:052,
-        driver.findElement(By.id("ebuilding")).sendKeys("052");
-        //  room:104,
-        driver.findElement(By.id("eroom")).sendKeys("104");
-        //  times:W F 1:00-2:50 pm,
-        driver.findElement(By.id("etimes")).sendKeys("W F 1:00-2:50 pm");
-        //  instructorEmail jgross@csumb.edu
-        driver.findElement(By.id("einstructorEmail")).sendKeys("jgross@csumb.edu");
-        // click Save
-        driver.findElement(By.id("save")).click();
-        Thread.sleep(SLEEP_DURATION);
-
-        String message = driver.findElement(By.id("addMessage")).getText();
-        assertTrue(message.startsWith("section added"));
-
-        // close the dialog
-        driver.findElement(By.id("close")).click();
-
-        // verify that new Section shows up on Sections list
-        // find the row for cst499
-        WebElement row499 = driver.findElement(By.xpath("//tr[td='cst499']"));
-        List<WebElement> buttons = row499.findElements(By.tagName("button"));
-        // delete is the second button
-        assertEquals(2, buttons.size());
-        buttons.get(1).click();
-        Thread.sleep(SLEEP_DURATION);
-        // find the YES to confirm button
-        List<WebElement> confirmButtons = driver
-                .findElement(By.className("react-confirm-alert-button-group"))
-                .findElements(By.tagName("button"));
-        assertEquals(2, confirmButtons.size());
-        confirmButtons.get(0).click();
-        Thread.sleep(SLEEP_DURATION);
-
-        // verify that Section list is now empty
-        assertThrows(NoSuchElementException.class, () ->
-                driver.findElement(By.xpath("//tr[td='cst499']")));
+        // check the expected error message
+        String message = response.getErrorMessage();
+        assertEquals("course not found cst599", message);
 
     }
 
-   @Test
-    public void systemTestAddSectionBadCourse() throws Exception {
-        // attempt to add a section to course cst599 2024, Spring
-        // fails because course does not exist
-        // change courseId to cst499 and try again
-        // verify success
-        // delete the section
+    @Test
+    public void addMultipleSections() throws Exception {
 
-       // click link to navigate to Sections
-       WebElement we = driver.findElement(By.id("sections"));
-       we.click();
-       Thread.sleep(SLEEP_DURATION);
+        MockHttpServletResponse response;
 
-       // enter cst, 2024, Spring and click search sections
-       driver.findElement(By.id("scourseId")).sendKeys("cst");
-       driver.findElement(By.id("syear")).sendKeys("2024");
-       driver.findElement(By.id("ssemester")).sendKeys("Spring");
-       driver.findElement(By.id("search")).click();
-       Thread.sleep(SLEEP_DURATION);
+        // create DTOs with data for new sections.
+        SectionDTO section1 = new SectionDTO(
+                0,
+                2024,
+                "Spring",
+                "cst499",
+                "",
+                1,
+                "052",
+                "104",
+                "W F 1:00-2:50 pm",
+                "Joshua Gross",
+                "jgross@csumb.edu"
+        );
 
-       // verify that cst499 is not in the list of sections
-       // Selenium throws NoSuchElementException when the element is not found
-       try {
-           while (true) {
-               WebElement row499 = driver.findElement(By.xpath("//tr[td='cst499']"));
-               List<WebElement> buttons = row499.findElements(By.tagName("button"));
-               // delete is the second button
-               assertEquals(2, buttons.size());
-               buttons.get(1).click();
-               Thread.sleep(SLEEP_DURATION);
-               // find the YES to confirm button
-               List<WebElement> confirmButtons = driver
-                       .findElement(By.className("react-confirm-alert-button-group"))
-                       .findElements(By.tagName("button"));
-               assertEquals(2, confirmButtons.size());
-               confirmButtons.get(0).click();
-               Thread.sleep(SLEEP_DURATION);
-           }
-       } catch (NoSuchElementException e) {
-           // do nothing, continue with test
-       }
+        SectionDTO section2 = new SectionDTO(
+                0,
+                2024,
+                "Spring",
+                "cst499",
+                "",
+                2,
+                "052",
+                "105",
+                "M W 3:00-4:50 pm",
+                "Alice Smith",
+                "asmith@csumb.edu"
+        );
 
-       // find and click button to add a section
-       driver.findElement(By.id("addSection")).click();
-       Thread.sleep(SLEEP_DURATION);
+        // issue http POST request to add the first section
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/sections")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(asJsonString(section1)))
+                .andReturn()
+                .getResponse();
 
-       // enter data
-       //  courseId: cst599
-       driver.findElement(By.id("ecourseId")).sendKeys("cst599");
-       //  secId: 1,
-       driver.findElement(By.id("esecId")).sendKeys("1");
-       //  year:2024,
-       driver.findElement(By.id("eyear")).sendKeys("2024");
-       //  semester:Spring,
-       driver.findElement(By.id("esemester")).sendKeys("Spring");
-       //  building:052,
-       driver.findElement(By.id("ebuilding")).sendKeys("052");
-       //  room:104,
-       driver.findElement(By.id("eroom")).sendKeys("104");
-       //  times:W F 1:00-2:50 pm,
-       driver.findElement(By.id("etimes")).sendKeys("W F 1:00-2:50 pm");
-       //  instructorEmail jgross@csumb.edu
-       driver.findElement(By.id("einstructorEmail")).sendKeys("jgross@csumb.edu");
-       // click Save
-       driver.findElement(By.id("save")).click();
-       Thread.sleep(SLEEP_DURATION);
+        assertEquals(200, response.getStatus());
 
-        WebElement msg = driver.findElement(By.id("addMessage"));
-        String message = msg.getText();
-        assertEquals("course not found cst599", message);
+        SectionDTO result1 = fromJsonString(response.getContentAsString(), SectionDTO.class);
+        assertNotEquals(0, result1.secNo());
+        assertEquals("cst499", result1.courseId());
 
-        // clear the courseId field and enter cst499
-        WebElement courseId = driver.findElement(By.id("ecourseId"));
-        courseId.sendKeys(Keys.chord(Keys.CONTROL,"a", Keys.DELETE));
-       Thread.sleep(SLEEP_DURATION);
-        courseId.sendKeys("cst499");
-        driver.findElement(By.id("save")).click();
-        Thread.sleep(SLEEP_DURATION);
+        // issue http POST request to add the second section
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/sections")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(asJsonString(section2)))
+                .andReturn()
+                .getResponse();
 
-       message = driver.findElement(By.id("addMessage")).getText();
-       assertTrue(message.startsWith("section added"));
+        assertEquals(200, response.getStatus());
 
-       // close the dialog
-       driver.findElement(By.id("close")).click();
-       Thread.sleep(SLEEP_DURATION);
+        SectionDTO result2 = fromJsonString(response.getContentAsString(), SectionDTO.class);
+        assertNotEquals(0, result2.secNo());
+        assertEquals("cst499", result2.courseId());
 
-        WebElement row = driver.findElement(By.xpath("//tr[td='cst499']"));
-        assertNotNull(row);
-       // find the delete button on the row from prior statement.
-       List<WebElement> deleteButtons = row.findElements(By.tagName("button"));
-       // delete is the second button
-       assertEquals(2, deleteButtons.size());
-       deleteButtons.get(1).click();
-       Thread.sleep(SLEEP_DURATION);
-       // find the YES to confirm button
-       List<WebElement> confirmButtons = driver
-               .findElement(By.className("react-confirm-alert-button-group"))
-               .findElements(By.tagName("button"));
-       assertEquals(2,confirmButtons.size());
-       confirmButtons.get(0).click();
-       Thread.sleep(SLEEP_DURATION);
+        // check the database for both sections
+        Section s1 = sectionRepository.findById(result1.secNo()).orElse(null);
+        assertNotNull(s1);
+        assertEquals("cst499", s1.getCourse().getCourseId());
 
-       // verify that Section list is empty
-       assertThrows(NoSuchElementException.class, () ->
-               driver.findElement(By.xpath("//tr[td='cst499']")));
+        Section s2 = sectionRepository.findById(result2.secNo()).orElse(null);
+        assertNotNull(s2);
+        assertEquals("cst499", s2.getCourse().getCourseId());
+
+        // clean up after test. issue http DELETE request for both sections
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .delete("/sections/"+result1.secNo()))
+                .andReturn()
+                .getResponse();
+
+        assertEquals(200, response.getStatus());
+
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .delete("/sections/"+result2.secNo()))
+                .andReturn()
+                .getResponse();
+
+        assertEquals(200, response.getStatus());
+
+        // check database for delete
+        s1 = sectionRepository.findById(result1.secNo()).orElse(null);
+        assertNull(s1);
+
+        s2 = sectionRepository.findById(result2.secNo()).orElse(null);
+        assertNull(s2);
+    }
+
+    private static String asJsonString(final Object obj) {
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static <T> T  fromJsonString(String str, Class<T> valueType ) {
+        try {
+            return new ObjectMapper().readValue(str, valueType);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

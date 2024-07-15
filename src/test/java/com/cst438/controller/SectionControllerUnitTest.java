@@ -42,6 +42,7 @@ public class SectionControllerUnitTest {
                 2024,
                 "Spring",
                 "cst499",
+                "",
                 1,
                 "052",
                 "104",
@@ -59,8 +60,8 @@ public class SectionControllerUnitTest {
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(asJsonString(section)))
-                        .andReturn()
-                        .getResponse();
+                .andReturn()
+                .getResponse();
 
         // check the response code for 200 meaning OK
         assertEquals(200, response.getStatus());
@@ -93,7 +94,7 @@ public class SectionControllerUnitTest {
     }
 
     @Test
-    public void addSectionFailsBadCourse( ) throws Exception {
+    public void addSectionFailsBadCourse() throws Exception {
 
         MockHttpServletResponse response;
 
@@ -103,6 +104,7 @@ public class SectionControllerUnitTest {
                 2024,
                 "Spring",
                 "cst599",
+                "",
                 1,
                 "052",
                 "104",
@@ -128,6 +130,106 @@ public class SectionControllerUnitTest {
         String message = response.getErrorMessage();
         assertEquals("course not found cst599", message);
 
+    }
+
+    @Test
+    public void addMultipleSections() throws Exception {
+
+        MockHttpServletResponse response;
+
+        // create DTOs with data for new sections.
+        SectionDTO section1 = new SectionDTO(
+                0,
+                2024,
+                "Spring",
+                "cst499",
+                "",
+                1,
+                "052",
+                "104",
+                "W F 1:00-2:50 pm",
+                "Joshua Gross",
+                "jgross@csumb.edu"
+        );
+
+        SectionDTO section2 = new SectionDTO(
+                0,
+                2024,
+                "Spring",
+                "cst499",
+                "",
+                2,
+                "052",
+                "105",
+                "M W 3:00-4:50 pm",
+                "Alice Smith",
+                "asmith@csumb.edu"
+        );
+
+        // issue http POST request to add the first section
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/sections")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(asJsonString(section1)))
+                .andReturn()
+                .getResponse();
+
+        assertEquals(200, response.getStatus());
+
+        SectionDTO result1 = fromJsonString(response.getContentAsString(), SectionDTO.class);
+        assertNotEquals(0, result1.secNo());
+        assertEquals("cst499", result1.courseId());
+
+        // issue http POST request to add the second section
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/sections")
+                                .accept(MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(asJsonString(section2)))
+                .andReturn()
+                .getResponse();
+
+        assertEquals(200, response.getStatus());
+
+        SectionDTO result2 = fromJsonString(response.getContentAsString(), SectionDTO.class);
+        assertNotEquals(0, result2.secNo());
+        assertEquals("cst499", result2.courseId());
+
+        // check the database for both sections
+        Section s1 = sectionRepository.findById(result1.secNo()).orElse(null);
+        assertNotNull(s1);
+        assertEquals("cst499", s1.getCourse().getCourseId());
+
+        Section s2 = sectionRepository.findById(result2.secNo()).orElse(null);
+        assertNotNull(s2);
+        assertEquals("cst499", s2.getCourse().getCourseId());
+
+        // clean up after test. issue http DELETE request for both sections
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .delete("/sections/"+result1.secNo()))
+                .andReturn()
+                .getResponse();
+
+        assertEquals(200, response.getStatus());
+
+        response = mvc.perform(
+                        MockMvcRequestBuilders
+                                .delete("/sections/"+result2.secNo()))
+                .andReturn()
+                .getResponse();
+
+        assertEquals(200, response.getStatus());
+
+        // check database for delete
+        s1 = sectionRepository.findById(result1.secNo()).orElse(null);
+        assertNull(s1);
+
+        s2 = sectionRepository.findById(result2.secNo()).orElse(null);
+        assertNull(s2);
     }
 
     private static String asJsonString(final Object obj) {
