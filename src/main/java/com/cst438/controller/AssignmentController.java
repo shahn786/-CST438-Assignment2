@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,9 @@ public class AssignmentController {
 
     @Autowired
     EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    TermRepository termRepository;
 
     // instructor lists assignments for a section.  Assignments ordered by due date.
     // logged in user must be the instructor for the section
@@ -70,6 +74,18 @@ public class AssignmentController {
         if (s==null) {
             throw  new ResponseStatusException( HttpStatus.NOT_FOUND, "section not found");
         }
+
+        // Fetch term dates
+        Term t = termRepository.findByYearAndSemester(s.getTerm().getYear(), s.getTerm().getSemester());
+        Date startDate = t.getStartDate();
+        Date endDate = t.getEndDate();
+
+
+        // Check if due date is within the term
+        if (a.getDueDate().before(startDate) || a.getDueDate().after(endDate)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assignment due date is outside of the course term");
+        }
+
         a.setSection(s);
         assignmentRepository.save(a);
 
