@@ -68,8 +68,6 @@ public class EnrollmentController {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "enrollment not found "+d.enrollmentId());
             } else {
                 e.setGrade(d.grade());
-                enrollmentRepository.save(e);
-                registrarServiceProxy.sendMessage(RegistrarServiceProxy.asJsonString(e));
             }
         }
     }
