@@ -24,8 +24,9 @@ public class EnrollmentController {
 
     @Autowired
     SectionRepository sectionRepository;
+
     @Autowired
-    RegistrarServiceProxy registrarServiceProxy;
+    RegistrarServiceProxy registrarService;
 
 
     // instructor downloads student enrollments and grades for a section, ordered by student name
@@ -69,6 +70,26 @@ public class EnrollmentController {
             } else {
                 e.setGrade(d.grade());
             }
+
+            EnrollmentDTO enrollmentDTO = new EnrollmentDTO(
+                    e.getEnrollmentId(),
+                    e.getGrade(),
+                    e.getStudent().getId(),
+                    e.getStudent().getName(),
+                    e.getStudent().getEmail(),
+                    e.getSection().getCourse().getCourseId(),
+                    e.getSection().getCourse().getTitle(),
+                    e.getSection().getSecId(),
+                    e.getSection().getSectionNo(),
+                    e.getSection().getBuilding(),
+                    e.getSection().getRoom(),
+                    e.getSection().getTimes(),
+                    e.getSection().getCourse().getCredits(),
+                    e.getSection().getTerm().getYear(),
+                    e.getSection().getTerm().getSemester()
+            );
+
+            registrarService.updateEnrollmentGrade(enrollmentDTO);
         }
     }
 }

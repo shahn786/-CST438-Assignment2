@@ -40,7 +40,7 @@ public class RegistrarServiceProxy {
     EnrollmentRepository enrollmentRepository;
 
     // Update Final Grades
-    public void updateEnrollment(EnrollmentDTO enrollment) {
+    public void updateEnrollmentGrade(EnrollmentDTO enrollment) {
         sendMessage("updateEnrollment " + asJsonString(enrollment));
     }
 
@@ -155,6 +155,7 @@ public class RegistrarServiceProxy {
 
     private void sendMessage(String s) {
         rabbitTemplate.convertAndSend(registrarServiceQueue.getName(), s);
+        System.out.println("Gradebook to Registrar " + s);
     }
     private static String asJsonString(final Object obj) {
         try {

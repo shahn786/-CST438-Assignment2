@@ -1,14 +1,13 @@
 package com.cst438.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.sql.Date;
 
 @Entity
 public class Term {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="term_id")
     private int termId;
     @Column(name="tyear")
