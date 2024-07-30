@@ -37,6 +37,9 @@ public class RegistrarServiceProxy {
     UserRepository userRepository;
 
     @Autowired
+    TermRepository termRepository;
+
+    @Autowired
     EnrollmentRepository enrollmentRepository;
 
     // Update Final Grades
@@ -48,7 +51,7 @@ public class RegistrarServiceProxy {
     public void receiveFromRegistrar(String message)  {
         // receive message from Registrar service
         try {
-            System.out.println("receive from Registrar " + message);
+            System.out.println("Received from Registrar " + message);
             String[] parts = message.split(" ", 2);
             String key = parts[0];
 
@@ -77,8 +80,10 @@ public class RegistrarServiceProxy {
                 Section s = new Section();
                 s.setSectionNo(dto.secNo());
                 Course c = courseRepository.findById(dto.courseId()).orElse(null);
+                Term term = termRepository.findByYearAndSemester(dto.year(), dto.semester());
                 if (c != null) {
                     s.setCourse(c);
+                    s.setTerm(term);
                     s.setSecId(dto.secId());
                     s.setBuilding(dto.building());
                     s.setRoom(dto.room());
@@ -149,7 +154,7 @@ public class RegistrarServiceProxy {
             }
 
         } catch (Exception e) {
-            System.out.println("Exception in receivedFromRegistrar " + e.getMessage());
+            System.out.println("Exception in receiveFromRegistrar " + e.getMessage());
         }
     }
 
