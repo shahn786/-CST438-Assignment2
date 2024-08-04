@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 
+import java.security.Principal;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,9 @@ public class AssignmentController {
 
     @Autowired
     TermRepository termRepository;
+
+    @Autowired
+    UserRepository userRepository;
 
     // instructor lists assignments for a section.  Assignments ordered by due date.
     // logged in user must be the instructor for the section
@@ -191,9 +195,11 @@ public class AssignmentController {
     @GetMapping("/assignments")
     @PreAuthorize("hasAuthority('SCOPE_ROLE_STUDENT')")
     public List<AssignmentStudentDTO> getStudentAssignments(
-            @RequestParam("studentId") int studentId,
+            Principal principal,
             @RequestParam("year") int year,
             @RequestParam("semester") String semester) {
+
+        int studentId = userRepository.findByEmail(principal.getName()).getId();
 
         // check that this enrollment is for the logged in user student.
 

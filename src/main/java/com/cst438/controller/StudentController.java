@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,21 +33,24 @@ public class StudentController {
    // studentId will be temporary until Login security is implemented
    @GetMapping("/transcripts")
    @PreAuthorize("hasAuthority('SCOPE_ROLE_STUDENT')")
-   public List<EnrollmentDTO> getTranscript(@RequestParam("studentId") Optional<Integer> studentId) {
-       if (studentId.isEmpty()){
+   public List<EnrollmentDTO> getTranscript(Principal principal) {
+
+       int studentId = userRepository.findByEmail(principal.getName()).getId();
+
+       if (studentId == 0){
            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "must have request param for studentId");
        }
-        User student = userRepository.findById(studentId.get()).orElse(null);
+        User student = userRepository.findById(studentId).orElse(null);
         if (student == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user id not found");
         }
-        List<Enrollment> enrollments = enrollmentRepository.findEnrollmentsByStudentIdOrderByTermId(studentId.get());
+        List<Enrollment> enrollments = enrollmentRepository.findEnrollmentsByStudentIdOrderByTermId(studentId);
         List<EnrollmentDTO> dlist = new ArrayList<>();
         for (Enrollment e : enrollments) {
            dlist.add( new EnrollmentDTO(
                    e.getEnrollmentId(),
                    e.getGrade(),
-                   studentId.get(),
+                   studentId,
                    student.getName(),
                    student.getEmail(),
                    e.getSection().getCourse().getCourseId(),
@@ -71,7 +75,9 @@ public class StudentController {
    public List<EnrollmentDTO> getSchedule(
            @RequestParam("year") int year,
            @RequestParam("semester") String semester,
-           @RequestParam("studentId") int studentId) {
+           Principal principal) {
+
+       int studentId = userRepository.findByEmail(principal.getName()).getId();
 
         List<Enrollment> enrollments = enrollmentRepository.findByYearAndSemesterOrderByCourseId(year, semester, studentId);
         List<EnrollmentDTO> dlist = new ArrayList<>();
@@ -106,7 +112,9 @@ public class StudentController {
     @PreAuthorize("hasAuthority('SCOPE_ROLE_STUDENT')")
     public EnrollmentDTO addCourse(
             @PathVariable int sectionNo,
-            @RequestParam("studentId") int studentId ) {
+            Principal principal) {
+
+        int studentId = userRepository.findByEmail(principal.getName()).getId();
 
        Enrollment e = enrollmentRepository.findEnrollmentBySectionNoAndStudentId(sectionNo, studentId);
        if (e!=null) {
