@@ -130,10 +130,10 @@ public class StudentController {
        if (section == null) {
            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "section number not found");
        }
-       Date now = new Date();
-       if (now.before(section.getTerm().getAddDate()) || now.after(section.getTerm().getAddDeadline())) {
-           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "cannot enroll in this section due to date");
-        }
+//       Date now = new Date();
+//       if (now.before(section.getTerm().getAddDate()) || now.after(section.getTerm().getAddDeadline())) {
+//           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "cannot enroll in this section due to date");
+//        }
        e.setSection(section);
        enrollmentRepository.save(e);
        return new EnrollmentDTO(

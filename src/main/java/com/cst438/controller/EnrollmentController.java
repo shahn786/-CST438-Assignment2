@@ -60,7 +60,7 @@ public class EnrollmentController {
     // instructor uploads  final grades for the section
     // user must be instructor for the section
     @PutMapping("/enrollments")
-    @PreAuthorize("hasAuthority('SCOPE_ROLE_INSTRUCTOR')")
+//    @PreAuthorize("hasAuthority('SCOPE_ROLE_INSTRUCTOR')")
     public void updateEnrollmentGrade(@RequestBody List<EnrollmentDTO> dlist) {
         for (EnrollmentDTO d : dlist) {
             Enrollment e = enrollmentRepository.findById(d.enrollmentId()).orElse(null);

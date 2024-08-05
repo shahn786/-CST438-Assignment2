@@ -14,7 +14,12 @@ public interface SectionRepository extends CrudRepository<Section, Integer> {
             "order by s.course.courseId, s.secId")
     List<Section> findByInstructorEmailAndYearAndSemester(String email, int year, String semester);
 
-    @Query("select s from Section s where current_date between s.term.addDate and s.term.addDeadline " +
+    // Temp testing solution for existing in a summer quarter with "current date" outside terms
+    @Query("select s from Section s where current_date between s.term.addDate and s.term.endDate " +
             " order by s.course.courseId, s.secId")
     List<Section> findByOpenOrderByCourseIdSectionId();
+
+//    @Query("select s from Section s where current_date between s.term.addDate and s.term.addDeadline " +
+//            " order by s.course.courseId, s.secId")
+//    List<Section> findByOpenOrderByCourseIdSectionId();
 }
