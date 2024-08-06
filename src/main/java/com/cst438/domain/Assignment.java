@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.sql.Date;
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 @Entity
 public class Assignment {
@@ -17,6 +18,8 @@ public class Assignment {
     @ManyToOne
     @JoinColumn(name="section_no", nullable=false)
     private Section section;
+    @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Grade> grades;
 
     public int getAssignmentId() {
         return assignmentId;
